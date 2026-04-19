@@ -1,8 +1,8 @@
 def generate_email(first_name: str, company: str) -> dict:
-    first_name = first_name or "Recruiter"
+    first_name = first_name or ""
     company = company or "the company"
 
-    subject = "Serving Notice Period"
+    subject = "Serving Notice Period | Data Scientist | 3.5+ Yrs | LWD: 8th June"
 
     html_body = f"""
     <html>

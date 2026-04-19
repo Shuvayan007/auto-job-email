@@ -1,15 +1,22 @@
 import streamlit as st
 import re
-# import requests
-# import smtplib
-# from email.message import EmailMessage
 import os
 from utils.attribute_fetching import get_name_and_company
 from utils.email_generator import generate_email
+from utils.email_sender import send_email
+import shutil
+import time
+import uuid
 
-# ---------------- SESSION ----------------
-if "default_resume_path" not in st.session_state:
-    st.session_state.default_resume_path = "default_resume.pdf"
+def cleanup_old_sessions(base_dir="resumes", max_age_hours=6):
+    now = time.time()
+
+    for folder in os.listdir(base_dir):
+        path = os.path.join(base_dir, folder)
+
+        if os.path.isdir(path):
+            if now - os.path.getmtime(path) > max_age_hours * 3600:
+                shutil.rmtree(path)
 
 # ---------------- FUNCTIONS ----------------
 
@@ -17,63 +24,51 @@ def extract_email(text):
     match = re.search(r"[a-zA-Z0-9+_.-]+@[a-zA-Z0-9.-]+", text)
     return match.group(0) if match else None
 
-# def generate_email(first_name, company):
-#     return f"""
-# Dear {first_name},
+# ---------------- RESUME FOLDER ----------------
 
-# Thank you for sharing the details and the opportunity with {company}.
+# Root resumes folder
+BASE_RESUME_DIR = "resumes"
 
-# Please find my updated resume attached along with the requested information below:
+# ---------------- SESSION ----------------
 
-# * Name: Shuvayan Pal
-# * Current Company: EY Global Delivery Services
-# * Current CTC: 6.5 LPA
-# * Expected CTC: 13–17 LPA
-# * Location: Kolkata
-# * Total Experience in Data Science: 3+ years
-# * Any Offers: No
-# * LinkedIn URL: https://www.linkedin.com/in/shuvayanpal/
+if "session_id" not in st.session_state:
+    st.session_state.session_id = str(uuid.uuid4())
+    st.caption(f"Created Session ID: {st.session_state.session_id}")
 
-# I am currently serving my notice period, with my last working day on 8th June 2026.
+# Email counter
+if "email_sent_count" not in st.session_state:
+    st.session_state.email_sent_count = 0
 
-# A recent digital photograph has also been attached as requested.
+if "ready_to_send" not in st.session_state:
+    st.session_state.ready_to_send = False
 
-# Please let me know if any further information is required. I look forward to your response.
+# Reset trigger
+if "reset_form" not in st.session_state:
+    st.session_state.reset_form = False
 
-# Warm regards,  
-# Shuvayan Pal  
-# 📞 +91 8910227437  
-# 📧 shuvayanpal2000@gmail.com
-# """
+SESSION_DIR = os.path.join(BASE_RESUME_DIR, st.session_state.session_id)
 
+# Create session-specific folder
+os.makedirs(SESSION_DIR, exist_ok=True)
 
-# def send_email(to_email, subject, body, resume_path):
-#     msg = EmailMessage()
-#     msg['Subject'] = subject
-#     msg['From'] = GMAIL_EMAIL
-#     msg['To'] = to_email
-#     msg.set_content(body)
+expected_path = os.path.join(SESSION_DIR, "default_resume.pdf")
 
-#     # Attach resume
-#     with open(resume_path, 'rb') as f:
-#         msg.add_attachment(
-#             f.read(),
-#             maintype='application',
-#             subtype='pdf',
-#             filename='Resume.pdf'
-#         )
-
-#     # Send email
-#     with smtplib.SMTP_SSL('smtp.gmail.com', 465) as smtp:
-#         smtp.login(GMAIL_EMAIL, GMAIL_APP_PASSWORD)
-#         smtp.send_message(msg)
-
+if st.session_state.get("default_resume_path") != expected_path:
+    st.session_state.default_resume_path = expected_path
 
 # ---------------- UI ----------------
 
-st.title("🚀 LinkedIn Job Post → Auto Apply")
+if st.session_state.get("reset_form"):
+    st.session_state.linkedin_input = ""
+    st.session_state.reset_form = False
 
-linkedin_text = st.text_area("Paste LinkedIn Job Post")
+st.title("🚀 LinkedIn Job Post → Auto Apply")
+st.metric("📤 Emails Sent This Session", st.session_state.email_sent_count)
+
+linkedin_text = st.text_area(
+    "Paste LinkedIn Job Post",
+    key="linkedin_input"
+)
 
 if os.path.exists(st.session_state.default_resume_path):
     st.info("📄 Default resume is set and will be used if no file is uploaded.")
@@ -84,7 +79,7 @@ uploaded_resume = st.file_uploader("Attach Resume (Optional)", type=["pdf"])
 
 if uploaded_resume:
     # Save temp file
-    temp_path = "temp_uploaded_resume.pdf"
+    temp_path = os.path.join(SESSION_DIR, "temp_uploaded_resume.pdf")
     with open(temp_path, "wb") as f:
         f.write(uploaded_resume.read())
 
@@ -98,6 +93,68 @@ if uploaded_resume:
 
         st.success("🎯 This resume is now set as default!")
 
+# if st.button("Submit"):
+#     if not linkedin_text:
+#         st.error("Please paste the LinkedIn post")
+#     else:
+#         email = extract_email(linkedin_text)
+
+#         if not email:
+#             st.error("No email found in post")
+#         else:
+#             st.success(f"Email Found: {email}")
+
+#             # Fetching atttributes using LLM
+#             data = get_name_and_company(email)
+
+#             if data:
+#                 first_name = data.get("first_name", "Recruiter")
+#                 company = data.get("company", "the company")
+
+#                 st.write(f"Detected: {first_name} from {company}")
+
+#                 email_content = generate_email(first_name, company)
+
+#                 subject = email_content["subject"]
+#                 html_body = email_content["html_body"]
+
+#                 st.subheader("📧 Email Preview")
+
+#                 st.iframe(html_body, height="content")
+
+#                 # Resume selection logic
+#                 if uploaded_resume:
+#                     resume_path = temp_path
+#                 else:
+#                     resume_path = st.session_state.default_resume_path
+
+#                 # subject = f"Application for Opportunity at {company}"
+
+#                 email = 'shuvayanpal@gmail.com'         #-------------OVERRIDING EMAIL ADDRESS----------------
+
+#                 confirm = st.checkbox("I confirm sending this email")
+                
+#                 if confirm:
+#                     success, message = send_email(
+#                         to_email=email,
+#                         subject=subject,
+#                         body=html_body,
+#                         resume_path=resume_path
+#                     )
+
+#                     if success:
+#                         st.session_state.email_sent_count += 1
+#                         st.success(f"{message} | Total Sent: {st.session_state.email_sent_count}")
+#                         st.toast("Email sent 🚀")
+
+#                         st.session_state.reset_form = True
+#                         time.sleep(2)
+#                         st.rerun()
+#                     else:
+#                         st.error(f"Failed: {message}")
+#             else:
+#                 st.error("❌ Unable to fetch Recipent's detils!")
+
 if st.button("Submit"):
     if not linkedin_text:
         st.error("Please paste the LinkedIn post")
@@ -109,34 +166,75 @@ if st.button("Submit"):
         else:
             st.success(f"Email Found: {email}")
 
-            # Fetching atttributes using LLM
             data = get_name_and_company(email)
 
             if data:
-                first_name = data.get("first_name", "Recruiter")
-                company = data.get("company", "the company")
+                st.session_state.first_name = data.get("first_name", "Recruiter")
+                st.session_state.company = data.get("company", "the company")
+                st.session_state.recipient_email = email
 
-                st.write(f"Detected: {first_name} from {company}")
-
-                email_content = generate_email(first_name, company)
-
-                subject = email_content["subject"]
-                html_body = email_content["html_body"]
-
-                st.subheader("📧 Email Preview")
-
-                st.iframe(html_body, height="content")
-
-                # Resume selection logic
-                if uploaded_resume:
-                    resume_path = "temp_uploaded_resume.pdf"
-                else:
-                    resume_path = st.session_state.default_resume_path
-
-                subject = f"Application for Opportunity at {company}"
-
-                # send_email(email, subject, email_body, resume_path)
-
-                st.success("✅ Email Sent Successfully!")
+                st.session_state.ready_to_send = True
             else:
-                st.error("❌ Unable to fetch Recipent's detils!")
+                st.error("❌ Unable to fetch details!")
+
+if st.session_state.get("ready_to_send"):
+
+    first_name = st.session_state.first_name
+    company = st.session_state.company
+    email = st.session_state.recipient_email
+
+    st.write(f"Detected: {first_name} from {company}")
+
+    email_content = generate_email(first_name, company)
+    subject = email_content["subject"]
+    html_body = email_content["html_body"]
+
+    st.subheader("📧 Email Preview")
+    st.iframe(html_body, height=400)
+
+    # Resume logic
+    if uploaded_resume:
+        resume_path = os.path.join(SESSION_DIR, "temp_uploaded_resume.pdf")
+    else:
+        resume_path = st.session_state.default_resume_path
+
+    confirm = st.checkbox("I confirm sending this email", key="confirm_send")
+
+    if st.button("🚀 Send Email"):
+        if not confirm:
+            st.warning("Please confirm before sending")
+        else:
+            email = 'shuvayanpal@gmail.com'         #-------------OVERRIDING EMAIL ADDRESS----------------
+            success, message = send_email(
+                to_email=email,
+                subject=subject,
+                body=html_body,
+                resume_path=resume_path
+            )
+
+            if success:
+                st.session_state.email_sent_count += 1
+                st.success(f"{message} | Total Sent: {st.session_state.email_sent_count}")
+                st.toast("Email sent 🚀")
+
+                st.session_state.reset_form = True
+                st.session_state.ready_to_send = False
+
+                time.sleep(2)
+                st.rerun()
+            else:
+                st.error(f"Failed: {message}")
+
+if st.button("❌ Exit Session"):
+    try:
+        shutil.rmtree(SESSION_DIR)
+    except Exception as e:
+        st.error(f"Error deleting session: {e}")
+
+    # Clear session state
+    for key in list(st.session_state.keys()):
+        del st.session_state[key]
+
+    st.success("Session cleared successfully ✅")
+    time.sleep(1)
+    st.rerun()
