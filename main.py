@@ -5,6 +5,7 @@ import re
 # from email.message import EmailMessage
 import os
 from utils.attribute_fetching import get_name_and_company
+from utils.email_generator import generate_email
 
 # ---------------- SESSION ----------------
 if "default_resume_path" not in st.session_state:
@@ -117,7 +118,14 @@ if st.button("Submit"):
 
                 st.write(f"Detected: {first_name} from {company}")
 
-                # email_body = generate_email(first_name, company)
+                email_content = generate_email(first_name, company)
+
+                subject = email_content["subject"]
+                html_body = email_content["html_body"]
+
+                st.subheader("📧 Email Preview")
+
+                st.iframe(html_body, height="content")
 
                 # Resume selection logic
                 if uploaded_resume:
