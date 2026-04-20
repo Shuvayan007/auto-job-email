@@ -1,23 +1,22 @@
-def generate_email(first_name: str, company: str) -> dict:
-    first_name = first_name or ""
-    company = company or "the company"
+def generate_email() -> dict:
+    # first_name = first_name or ""
+    # company = company or "the company"
 
     subject = "Serving Notice Period | Data Scientist | 3.5+ Yrs | LWD: 8th June"
 
     html_body = f"""
     <html>
     <body style="font-family: Arial, sans-serif; line-height: 1.6;">
-        <p>Hi <b>{first_name}</b>,</p>
+        <p>Hi,</p>
 
         <p>
-        I came across your LinkedIn post regarding the Data Scientist opening with <b>{company}</b> and wanted to share my profile for your consideration. Please find my resume attached.
+        I came across your LinkedIn post regarding the Data Scientist opening and wanted to share my profile for your consideration. Please find my resume attached.
         </p>
 
         <p>I am currently working as a <b>Data Scientist</b> at EY Global Delivery <b>Services</b> with <b>3.5+</b> years of experience, and my background aligns well with the requirements you mentioned.</p>
 
         <ul>
             <li><b>Current Organization:</b> EY Global Delivery Services</li>
-            <li><b>Current CTC:</b> 6.5 LPA</li>
             <li><b>Total Experience in Data Science:</b> 3.5+ years</li>
             <li><b>Last Working Day:</b> 8th June, 2026</li>
         </ul>

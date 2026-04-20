@@ -166,26 +166,27 @@ if st.button("Submit"):
         else:
             st.success(f"Email Found: {email}")
 
-            data = get_name_and_company(email)
+            # data = get_name_and_company(email)
 
-            if data:
-                st.session_state.first_name = data.get("first_name", "Recruiter")
-                st.session_state.company = data.get("company", "the company")
-                st.session_state.recipient_email = email
+            # if data:
+            #     st.session_state.first_name = data.get("first_name", "Recruiter")
+            #     st.session_state.company = data.get("company", "the company")
+            st.session_state.recipient_email = email
 
-                st.session_state.ready_to_send = True
-            else:
-                st.error("❌ Unable to fetch details!")
+            st.session_state.ready_to_send = True
+            # else:
+            #     st.error("❌ Unable to fetch details!")
 
 if st.session_state.get("ready_to_send"):
 
-    first_name = st.session_state.first_name
-    company = st.session_state.company
+    # first_name = st.session_state.first_name
+    # company = st.session_state.company
     email = st.session_state.recipient_email
 
-    st.write(f"Detected: {first_name} from {company}")
+    # st.write(f"Detected: {first_name} from {company}")
 
-    email_content = generate_email(first_name, company)
+    # email_content = generate_email(first_name, company)
+    email_content = generate_email()
     subject = email_content["subject"]
     html_body = email_content["html_body"]
 
@@ -198,32 +199,32 @@ if st.session_state.get("ready_to_send"):
     else:
         resume_path = st.session_state.default_resume_path
 
-    confirm = st.checkbox("I confirm sending this email", key="confirm_send")
+    # confirm = st.checkbox("I confirm sending this email", key="confirm_send")
 
-    if st.button("🚀 Send Email"):
-        if not confirm:
-            st.warning("Please confirm before sending")
-        else:
-            email = 'shuvayanpal@gmail.com'         #-------------OVERRIDING EMAIL ADDRESS----------------
-            success, message = send_email(
-                to_email=email,
-                subject=subject,
-                body=html_body,
-                resume_path=resume_path
-            )
+    # if st.button("🚀 Send Email"):
+        # if not confirm:
+        #     st.warning("Please confirm before sending")
+        # else:
+        # email = 'shuvayanpal@gmail.com'         #-------------OVERRIDING EMAIL ADDRESS----------------
+    success, message = send_email(
+        to_email=email,
+        subject=subject,
+        body=html_body,
+        resume_path=resume_path
+    )
 
-            if success:
-                st.session_state.email_sent_count += 1
-                st.success(f"{message} | Total Sent: {st.session_state.email_sent_count}")
-                st.toast("Email sent 🚀")
+    if success:
+        st.session_state.email_sent_count += 1
+        st.success(f"{message} | Total Sent: {st.session_state.email_sent_count}")
+        st.toast("Email sent 🚀")
 
-                st.session_state.reset_form = True
-                st.session_state.ready_to_send = False
+        st.session_state.reset_form = True
+        st.session_state.ready_to_send = False
 
-                time.sleep(2)
-                st.rerun()
-            else:
-                st.error(f"Failed: {message}")
+        time.sleep(2)
+        st.rerun()
+    else:
+        st.error(f"Failed: {message}")
 
 if st.button("❌ Exit Session"):
     try:
