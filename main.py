@@ -7,6 +7,7 @@ from utils.email_sender import send_email
 import shutil
 import time
 import uuid
+from utils.email_db_supabase import can_send_email, log_email, cleanup_old_records
 
 def cleanup_old_sessions(base_dir="resumes", max_age_hours=6):
     now = time.time()
@@ -34,6 +35,7 @@ BASE_RESUME_DIR = "resumes"
 if "session_id" not in st.session_state:
     st.session_state.session_id = str(uuid.uuid4())
     st.caption(f"Created Session ID: {st.session_state.session_id}")
+    cleanup_old_records()
 
 # Email counter
 if "email_sent_count" not in st.session_state:
@@ -93,68 +95,6 @@ if uploaded_resume:
 
         st.success("🎯 This resume is now set as default!")
 
-# if st.button("Submit"):
-#     if not linkedin_text:
-#         st.error("Please paste the LinkedIn post")
-#     else:
-#         email = extract_email(linkedin_text)
-
-#         if not email:
-#             st.error("No email found in post")
-#         else:
-#             st.success(f"Email Found: {email}")
-
-#             # Fetching atttributes using LLM
-#             data = get_name_and_company(email)
-
-#             if data:
-#                 first_name = data.get("first_name", "Recruiter")
-#                 company = data.get("company", "the company")
-
-#                 st.write(f"Detected: {first_name} from {company}")
-
-#                 email_content = generate_email(first_name, company)
-
-#                 subject = email_content["subject"]
-#                 html_body = email_content["html_body"]
-
-#                 st.subheader("📧 Email Preview")
-
-#                 st.iframe(html_body, height="content")
-
-#                 # Resume selection logic
-#                 if uploaded_resume:
-#                     resume_path = temp_path
-#                 else:
-#                     resume_path = st.session_state.default_resume_path
-
-#                 # subject = f"Application for Opportunity at {company}"
-
-#                 email = 'shuvayanpal@gmail.com'         #-------------OVERRIDING EMAIL ADDRESS----------------
-
-#                 confirm = st.checkbox("I confirm sending this email")
-                
-#                 if confirm:
-#                     success, message = send_email(
-#                         to_email=email,
-#                         subject=subject,
-#                         body=html_body,
-#                         resume_path=resume_path
-#                     )
-
-#                     if success:
-#                         st.session_state.email_sent_count += 1
-#                         st.success(f"{message} | Total Sent: {st.session_state.email_sent_count}")
-#                         st.toast("Email sent 🚀")
-
-#                         st.session_state.reset_form = True
-#                         time.sleep(2)
-#                         st.rerun()
-#                     else:
-#                         st.error(f"Failed: {message}")
-#             else:
-#                 st.error("❌ Unable to fetch Recipent's detils!")
-
 if st.button("Submit"):
     if not linkedin_text:
         st.error("Please paste the LinkedIn post")
@@ -166,11 +106,6 @@ if st.button("Submit"):
         else:
             st.success(f"Email Found: {email}")
 
-            # data = get_name_and_company(email)
-
-            # if data:
-            #     st.session_state.first_name = data.get("first_name", "Recruiter")
-            #     st.session_state.company = data.get("company", "the company")
             st.session_state.recipient_email = email
 
             st.session_state.ready_to_send = True
@@ -179,13 +114,8 @@ if st.button("Submit"):
 
 if st.session_state.get("ready_to_send"):
 
-    # first_name = st.session_state.first_name
-    # company = st.session_state.company
     email = st.session_state.recipient_email
 
-    # st.write(f"Detected: {first_name} from {company}")
-
-    # email_content = generate_email(first_name, company)
     email_content = generate_email()
     subject = email_content["subject"]
     html_body = email_content["html_body"]
@@ -199,32 +129,28 @@ if st.session_state.get("ready_to_send"):
     else:
         resume_path = st.session_state.default_resume_path
 
-    # confirm = st.checkbox("I confirm sending this email", key="confirm_send")
-
-    # if st.button("🚀 Send Email"):
-        # if not confirm:
-        #     st.warning("Please confirm before sending")
-        # else:
-        # email = 'shuvayanpal@gmail.com'         #-------------OVERRIDING EMAIL ADDRESS----------------
-    success, message = send_email(
-        to_email=email,
-        subject=subject,
-        body=html_body,
-        resume_path=resume_path
-    )
-
-    if success:
-        st.session_state.email_sent_count += 1
-        st.success(f"{message} | Total Sent: {st.session_state.email_sent_count}")
-        st.toast("Email sent 🚀")
-
-        st.session_state.reset_form = True
-        st.session_state.ready_to_send = False
-
-        time.sleep(2)
-        st.rerun()
+    if not can_send_email(email):
+        st.error("❌ Email already sent in last 48 hours")
     else:
-        st.error(f"Failed: {message}")
+        success, message = send_email(
+            to_email=email,
+            subject=subject,
+            body=html_body,
+            resume_path=resume_path
+        )
+
+        if success:
+            st.session_state.email_sent_count += 1
+            st.success(f"{message} | Total Sent: {st.session_state.email_sent_count}")
+            st.toast("Email sent 🚀")
+
+            st.session_state.reset_form = True
+            st.session_state.ready_to_send = False
+
+            time.sleep(2)
+            st.rerun()
+        else:
+            st.error(f"Failed: {message}")
 
 if st.button("❌ Exit Session"):
     try:
@@ -237,5 +163,5 @@ if st.button("❌ Exit Session"):
         del st.session_state[key]
 
     st.success("Session cleared successfully ✅")
-    time.sleep(1)
+    time.sleep(2)
     st.rerun()

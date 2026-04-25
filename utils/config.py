@@ -17,6 +17,10 @@ def load_config():
             config["gmail_email"] = st.secrets.get("GMAIL_EMAIL")
             config["gmail_app_password"] = st.secrets.get("GMAIL_APP_PASSWORD")
 
+            # DB
+            config["supabase_url"] = st.secrets.get("SUPABASE_URL")
+            config["supabase_key"] = st.secrets.get("SUPABASE_KEY")
+
             return config
     except Exception:
         pass  # fall back to .env
@@ -31,5 +35,9 @@ def load_config():
     # Gmail
     config["gmail_email"] = os.getenv("GMAIL_EMAIL")
     config["gmail_app_password"] = os.getenv("GMAIL_APP_PASSWORD")
+
+    # DB
+    config["supabase_url"] = os.getenv("SUPABASE_URL")
+    config["supabase_key"] = os.getenv("SUPABASE_KEY")
 
     return config
