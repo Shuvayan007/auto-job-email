@@ -1,6 +1,7 @@
 import requests
 import time
 from utils.config import load_config
+from utils.logger import log_event
 
 config = load_config()
 
@@ -30,13 +31,15 @@ def can_send_email(email):
     }
 
     response = requests.get(TABLE_URL, headers=HEADERS, params=params)
-    print(response)
+    # log_event("Supabase API", f"Response: {response.status_code} | Data: {response.text}")
 
     if response.status_code != 200:
+        # log_event("Supabase API error", f"Status Code: {response.status_code} | Response: {response.text}") 
         raise Exception(f"Supabase Error: {response.text}")
 
     data = response.json()
 
+    # log_event("Supabase API", f"Email Check Result for {email}: {data}")
     return len(data) == 0  # True = safe to send
 
 
@@ -49,9 +52,10 @@ def log_email(email):
 
     response = requests.post(TABLE_URL, headers=HEADERS, json=payload)
 
-    print(response)
+    # log_event("Supabase API", f"Response: {response.status_code} | Data: {response.text}")
 
     if response.status_code not in (200, 201):
+        # log_event("Supabase API error", f"Status Code: {response.status_code} | Response: {response.text}")
         raise Exception(f"Insert failed: {response.text}")
 
 
@@ -62,6 +66,14 @@ def cleanup_old_records():
     delete_url = f"{TABLE_URL}?timestamp=lt.{cutoff}"
 
     response = requests.delete(delete_url, headers=HEADERS)
+    # try:
+    #     log_event("Supabase API", f"Cleanup Response: {response.status_code} | Data: {response.text}")
+    # except:
+    #     pass
 
     if response.status_code not in (200, 204):
+        # try:
+        #     log_event("Supabase API error", f"Status Code: {response.status_code} | Response: {response.text}")
+        # except:
+        #     pass
         raise Exception(f"Cleanup failed: {response.text}")
