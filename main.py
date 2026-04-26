@@ -142,6 +142,7 @@ if st.session_state.get("ready_to_send"):
         if success:
             st.session_state.email_sent_count += 1
             st.success(f"{message} | Total Sent: {st.session_state.email_sent_count}")
+            log_email(email)
             st.toast("Email sent 🚀")
 
             st.session_state.reset_form = True

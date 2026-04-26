@@ -30,6 +30,7 @@ def can_send_email(email):
     }
 
     response = requests.get(TABLE_URL, headers=HEADERS, params=params)
+    print(response)
 
     if response.status_code != 200:
         raise Exception(f"Supabase Error: {response.text}")
@@ -47,6 +48,8 @@ def log_email(email):
     }
 
     response = requests.post(TABLE_URL, headers=HEADERS, json=payload)
+
+    print(response)
 
     if response.status_code not in (200, 201):
         raise Exception(f"Insert failed: {response.text}")

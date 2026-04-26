@@ -1,6 +1,7 @@
 import requests
 import time
 from utils.config import load_config
+from utils.email_db_supabase import can_send_email, log_email, cleanup_old_records
 
 config = load_config()
 
@@ -24,5 +25,7 @@ payload = {
     "timestamp": int(time.time())
 }
 
-res = requests.post(url, headers=headers, json=payload)
-print(res.status_code, res.text)
+# res = requests.post(url, headers=headers, json=payload)
+# print(res.status_code, res.text)
+print(can_send_email("subhajitpati@test.com"))
+# log_email("shuvayanpal@gmail.com")
