@@ -60,6 +60,14 @@ expected_path = os.path.join(SESSION_DIR, "default_resume.pdf")
 if st.session_state.get("default_resume_path") != expected_path:
     st.session_state.default_resume_path = expected_path
 
+def santize_email(email):
+    """Sanitize email by removing leading/trailing whitespace and converting to lowercase."""
+    if email[-1] == ".":
+        email = email[:-1]
+    if " " in email:
+        email = email.replace(" ", "")
+    return email.strip().lower()
+
 # ---------------- UI ----------------
 
 if st.session_state.get("reset_form"):
@@ -111,6 +119,7 @@ if st.button("Submit"):
             st.error("No email found in post")
         else:
             log_event(SESSION_DIR, f"Email extracted: {email}")
+            email = santize_email(email)
             st.success(f"Email Found: {email}")
 
             st.session_state.recipient_email = email
