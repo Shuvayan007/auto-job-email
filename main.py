@@ -165,10 +165,10 @@ if st.session_state.get("ready_to_send"):
             st.error(f"Failed: {message}")
 
 if st.button("❌ Exit Session"):
-    try:
-        shutil.rmtree(SESSION_DIR)
-    except Exception as e:
-        st.error(f"Error deleting session: {e}")
+    # try:
+    #     shutil.rmtree(SESSION_DIR)
+    # except Exception as e:
+    #     st.error(f"Error deleting session: {e}")
 
     # Clear session state
     for key in list(st.session_state.keys()):
