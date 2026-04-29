@@ -1,7 +1,7 @@
 import streamlit as st
 import re
 import os
-from utils.attribute_fetching import get_name_and_company
+from utils.ai_email_generator import generate_personalized_email
 from utils.email_generator import generate_email
 from utils.email_sender import send_email
 import shutil
@@ -82,6 +82,8 @@ linkedin_text = st.text_area(
     key="linkedin_input"
 )
 
+personalize = st.checkbox("✨ Personalize Email (AI - Optional)")
+
 if os.path.exists(st.session_state.default_resume_path):
     st.info("📄 Default resume is set and will be used if no file is uploaded.")
 else:
@@ -132,7 +134,11 @@ if st.session_state.get("ready_to_send"):
 
     email = st.session_state.recipient_email
 
-    email_content = generate_email()
+    # email_content = generate_email()
+    if personalize:
+        email_content = generate_personalized_email(linkedin_text)
+    else:
+        email_content = generate_email()
     subject = email_content["subject"]
     html_body = email_content["html_body"]
 
